@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎈 Weather Balloon BOM — Mission 3</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181c27;
+  --surface2: #1e2333;
+  --border: rgba(255,255,255,.07);
+  --border2: rgba(255,255,255,.14);
+  --text: #e8eaf0;
+  --muted: #7a7f94;
+  --hint: #454a5e;
+  --blue: #4f8ef7;
+  --blue-dim: rgba(79,142,247,.15);
+  --blue-border: rgba(79,142,247,.35);
+  --green: #4caf7d;
+  --green-dim: rgba(76,175,125,.13);
+  --green-border: rgba(76,175,125,.32);
+  --amber: #e8a84c;
+  --amber-dim: rgba(232,168,76,.13);
+  --amber-border: rgba(232,168,76,.32);
+  --gray-dim: rgba(255,255,255,.06);
+  --gray-border: rgba(255,255,255,.14);
+  --red: #e85c5c;
+  --red-dim: rgba(232,92,92,.13);
+  --red-border: rgba(232,92,92,.32);
+  --r: 7px; --rl: 11px;
+  --font: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ─── HEADER ─── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+  position: sticky; top: 0; z-index: 60;
+  backdrop-filter: blur(8px);
+}
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, #1e2a4a 0%, #243060 100%);
+  border: 1px solid var(--blue-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.logo-name { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.logo-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  padding: 7px 13px; border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--surface2); color: var(--text);
+  font-size: 12px; font-family: var(--font);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.btn:hover { border-color: rgba(255,255,255,.25); background: #252a3a; }
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: var(--blue-dim); border-color: var(--blue-border);
+  color: var(--blue); font-weight: 500;
+}
+.btn-primary:hover { background: rgba(79,142,247,.22); }
+.btn-danger {
+  background: var(--red-dim); border-color: var(--red-border); color: var(--red);
+}
+.btn-danger:hover { background: rgba(232,92,92,.22); }
+.btn-sm { padding: 4px 9px; font-size: 11px; }
+.btn-icon { padding: 5px 8px; font-size: 13px; }
+
+/* ─── STATS BAR ─── */
+.stats-bar {
+  display: flex; gap: 8px; padding: 14px 24px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+.stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 9px 14px; min-width: 100px;
+  transition: border-color .2s;
+}
+.stat:hover { border-color: var(--border2); }
+.stat-n { font-size: 20px; font-weight: 600; font-family: var(--mono); }
+.stat-l { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ─── CONTROLS ─── */
+.controls {
+  padding: 12px 24px;
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+.search-wrap { position: relative; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+.search-box {
+  padding: 7px 11px 7px 30px;
+  border: 1px solid var(--border2); border-radius: var(--r);
+  background: var(--surface); color: var(--text);
+  font-size: 12px; font-family: var(--font); width: 220px;
+}
+.search-box:focus { outline: none; border-color: var(--blue); }
+.search-box::placeholder { color: var(--hint); }
+.fsel {
+  padding: 7px 11px; border: 1px solid var(--border2); border-radius: var(--r);
+  background: var(--surface); color: var(--text);
+  font-size: 12px; font-family: var(--font); cursor: pointer;
+}
+.fsel:focus { outline: none; border-color: var(--blue); }
+.result-count { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-left: 4px; }
+
+/* ─── LEGEND ─── */
+.legend {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  padding: 0 24px 12px;
+}
+.leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── MAIN ─── */
+main { padding: 0 24px 56px; }
+.cat-section { margin-bottom: 22px; }
+.cat-label {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .09em;
+  font-family: var(--mono);
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.cat-count { font-weight: 400; opacity: .5; }
+
+/* ─── TABLE ─── */
+.table-wrap {
+  border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead { background: rgba(255,255,255,.03); }
+th {
+  text-align: left; padding: 8px 12px;
+  font-size: 10px; font-weight: 600; font-family: var(--mono);
+  color: var(--muted); text-transform: uppercase; letter-spacing: .07em;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background .1s; }
+tbody tr:hover td { background: rgba(255,255,255,.025); }
+.td-num { color: var(--hint); font-family: var(--mono); font-size: 11px; width: 32px; }
+.td-name { font-weight: 500; }
+.td-model { color: var(--muted); }
+.td-specs { color: var(--muted); max-width: 160px; }
+.td-price { font-family: var(--mono); white-space: nowrap; }
+
+/* ─── BADGE ─── */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-family: var(--mono);
+  padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap;
+}
+.badge-Core { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+.badge-Add { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+.badge-Ground-station { background: var(--gray-dim); color: var(--muted); border: 1px solid var(--gray-border); }
+.badge-Mission-4 { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-border); }
+
+/* ─── QTY ─── */
+.qty-ctrl { display: flex; align-items: center; gap: 4px; }
+.qty-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--text); font-size: 15px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font); transition: all .12s;
+}
+.qty-btn:hover { border-color: var(--border2); background: #2a2f42; }
+.qty-val { font-family: var(--mono); font-size: 12px; min-width: 20px; text-align: center; }
+.action-btns { display: flex; gap: 5px; }
+
+/* ─── EMPTY ─── */
+.empty-state {
+  text-align: center; padding: 56px 24px; color: var(--muted);
+}
+.empty-icon { font-size: 36px; margin-bottom: 10px; opacity: .4; }
+.empty-state p { font-size: 12px; margin-top: 4px; color: var(--hint); }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border2);
+  padding: 9px 16px; border-radius: var(--r);
+  font-size: 12px; font-family: var(--mono);
+  opacity: 0; transition: all .22s; z-index: 999;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── MODAL ─── */
+.backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6); z-index: 200;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+.backdrop.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--rl); padding: 22px;
+  width: 440px; max-width: 100%; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  animation: modalIn .18s ease;
+}
+@keyframes modalIn { from { opacity:0; transform:scale(.95) translateY(8px); } to { opacity:1; transform:none; } }
+.modal-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-x {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--muted); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font); transition: all .12s;
+}
+.modal-x:hover { color: var(--text); border-color: var(--border2); background: #252a3a; }
+.field { margin-bottom: 13px; }
+.field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; font-family: var(--mono); font-weight: 500; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid var(--border2); border-radius: var(--r);
+  background: var(--surface2); color: var(--text);
+  font-size: 12px; font-family: var(--font);
+  transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--blue); }
+.field input::placeholder, .field textarea::placeholder { color: var(--hint); }
+.field select option { background: var(--surface2); }
+.field textarea { resize: vertical; min-height: 52px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-err {
+  display: none; background: var(--red-dim); border: 1px solid var(--red-border);
+  color: var(--red); border-radius: var(--r);
+  padding: 8px 11px; font-size: 11px; font-family: var(--mono); margin-top: 6px;
+}
+.modal-footer {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:680px){
+  header, .stats-bar, .controls, .legend, main { padding-left: 14px; padding-right: 14px; }
+  .td-model, .td-specs, .hide-sm { display: none; }
+  .search-box { width: 150px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🎈</div>
+    <div>
+      <div class="logo-name">Weather Balloon BOM</div>
+      <div class="logo-sub">MISSION_3 / component-list</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="importData()" title="Import JSON backup">⬆ Import</button>
+    <button class="btn" onclick="exportJSON()" title="Export JSON backup">💾 Save JSON</button>
+    <button class="btn" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn" onclick="resetData()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="openAdd()">+ Add component</button>
+  </div>
+</header>
+
+<div class="stats-bar" id="stats"></div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-box" id="search" type="text" placeholder="Search name, model, specs…" oninput="render()">
+  </div>
+  <select class="fsel" id="f-status" onchange="render()">
+    <option value="">All statuses</option>
+    <option value="Core">Core</option>
+    <option value="Add">Add</option>
+    <option value="Ground station">Ground station</option>
+    <option value="Mission 4">Mission 4</option>
+  </select>
+  <select class="fsel" id="f-cat" onchange="render()">
+    <option value="">All categories</option>
+  </select>
+  <span class="result-count" id="rc"></span>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:var(--blue)"></div>Core payload</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Recommended add</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--muted)"></div>Ground station</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--amber)"></div>Mission 4 sensor</div>
+</div>
+
+<main id="main"></main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal -->
+<div class="backdrop" id="backdrop" onclick="closeOuter(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+    <div class="modal-hdr">
+      <div class="modal-title" id="mtitle">Add component</div>
+      <button class="modal-x" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="field">
+      <label>NAME <span style="color:var(--red)">*</span></label>
+      <input type="text" id="f-name" placeholder="e.g. BME280 temperature sensor" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>MODEL / VARIANT</label>
+      <input type="text" id="f-model" placeholder="e.g. Bosch BME280, I2C breakout" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>CATEGORY <span style="color:var(--red)">*</span></label>
+        <select id="f-cat-m">
+          <option value="Microcontroller">Microcontroller</option>
+          <option value="Communication — Payload">Communication — Payload</option>
+          <option value="Communication — Ground station">Communication — Ground station</option>
+          <option value="GPS & Antennas">GPS & Antennas</option>
+          <option value="Power System">Power System</option>
+          <option value="Indicators & Wiring">Indicators & Wiring</option>
+          <option value="Data & Backup">Data & Backup</option>
+          <option value="Enclosure & Flight">Enclosure & Flight</option>
+          <option value="Sensors — Mission 4">Sensors — Mission 4</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>STATUS</label>
+        <select id="f-status-m">
+          <option value="Core">Core</option>
+          <option value="Add">Add</option>
+          <option value="Ground station">Ground station</option>
+          <option value="Mission 4">Mission 4</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>SPECS</label>
+      <input type="text" id="f-specs" placeholder="e.g. I2C, 3.3V, −55°C to +125°C" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>PRICE (INDIA)</label>
+        <input type="text" id="f-price" placeholder="e.g. ₹150–300" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>QUANTITY</label>
+        <input type="number" id="f-qty" min="1" value="1">
+      </div>
+    </div>
+    <div class="modal-err" id="merr"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="savebtn" onclick="saveComp()">Save component</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden import input -->
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+// ─── DEFAULT DATA ───────────────────────────────────────────────────────────
+const DEFAULTS = [
+  {id:1,  category:"Microcontroller",                name:"ESP32 DevKit v1",            model:"Espressif ESP32-WROOM-32",          specs:"240 MHz dual-core, 3.3V, Sleep ~10µA",       price:"₹200–350",  status:"Core",           qty:1},
+  {id:2,  category:"Communication — Payload",        name:"Ra-02 LoRa module",           model:"Ai-Thinker SX1278, 433 MHz",        specs:"+20 dBm, −148 dBm sensitivity, SPI",         price:"₹300–450",  status:"Core",           qty:1},
+  {id:3,  category:"Communication — Payload",        name:"433 MHz whip antenna",        model:"1/4 wave ground plane, SMA-female", specs:"17.3 cm element, 50 Ω",                      price:"₹80–200",   status:"Add",            qty:1},
+  {id:4,  category:"Communication — Ground station", name:"TTGO LoRa32 board",           model:"ESP32 + SX1278 + OLED, 433 MHz",    specs:"433 MHz, OLED display, USB-C",               price:"₹600–900",  status:"Ground station", qty:1},
+  {id:5,  category:"Communication — Ground station", name:"433 MHz ground antenna",      model:"Yagi or whip, SMA-male",            specs:"Yagi: high gain / Whip: omnidirectional",    price:"₹200–800",  status:"Ground station", qty:1},
+  {id:6,  category:"GPS & Antennas",                 name:"u-blox NEO-M8N",              model:"GPS module, UART",                  specs:"UART 9600 baud, 3.3V, high-alt mode req.",   price:"₹350–700",  status:"Core",           qty:1},
+  {id:7,  category:"GPS & Antennas",                 name:"Ceramic patch GPS antenna",   model:"Active, 25×25 mm, SMA-female",      specs:"1575.42 MHz, Active 3.3V bias",              price:"₹100–250",  status:"Add",            qty:1},
+  {id:8,  category:"Power System",                   name:"LiPo battery",                model:"3.7V, 2000–3000 mAh, JST-PH",      specs:"3.7V nominal, ~60–80g, −50°C capable",       price:"₹300–600",  status:"Core",           qty:1},
+  {id:9,  category:"Power System",                   name:"TP4056 charging module",      model:"With DW01A protection — 6-pin",     specs:"1A charge rate, over-discharge protect",     price:"₹30–60",    status:"Add",            qty:1},
+  {id:10, category:"Power System",                   name:"AMS1117-3.3 voltage reg.",    model:"LDO, TO-223 / SOT-223",             specs:"3.3V out, 800 mA max, dropout ~1.2V",        price:"₹5–20",     status:"Add",            qty:1},
+  {id:11, category:"Power System",                   name:"Polyfuse (resettable fuse)",  model:"PPTC, 500 mA–1A hold current",     specs:"500 mA–1A hold, PPTC, series on V+",        price:"₹10–30",    status:"Add",            qty:1},
+  {id:12, category:"Power System",                   name:"Power switch",                model:"SPST locking toggle",               specs:"SPST locking, rated 2A+",                    price:"₹20–60",    status:"Add",            qty:1},
+  {id:13, category:"Power System",                   name:"Decoupling capacitors",       model:"100µF electrolytic + 100nF ceramic",specs:"100µF on LoRa VCC, 100nF on all ICs",       price:"₹10–30",    status:"Add",            qty:4},
+  {id:14, category:"Indicators & Wiring",            name:"Status LEDs",                 model:"3mm green + red, 330Ω resistors",   specs:"Green + Red, 330Ω series each, 3.3V GPIO",  price:"₹10–30",    status:"Add",            qty:2},
+  {id:15, category:"Indicators & Wiring",            name:"Silicone wires",              model:"24–28 AWG, multi-colour",           specs:"Silicone insulation, flexible at −50°C",     price:"₹100–200",  status:"Add",            qty:1},
+  {id:16, category:"Indicators & Wiring",            name:"JST connectors + perfboard",  model:"JST PH 2.0 + universal PCB",        specs:"JST PH 2.0 for battery, no breadboards",    price:"₹50–150",   status:"Add",            qty:1},
+  {id:17, category:"Data & Backup",                  name:"SD card module + micro SD",   model:"SPI, 3.3V — 4GB card",              specs:"SPI, 3.3V, FAT32 formatted",                 price:"₹80–150",   status:"Add",            qty:1},
+  {id:18, category:"Enclosure & Flight",             name:"EPS styrofoam box",           model:"Custom cut or food container",       specs:"~25mm thick EPS, total weight <500g",        price:"₹50–200",   status:"Add",            qty:1},
+  {id:19, category:"Enclosure & Flight",             name:"Kapton tape",                 model:"Polyimide tape, 25mm wide",          specs:"Stable −200°C to +300°C",                    price:"₹80–150",   status:"Add",            qty:1},
+  {id:20, category:"Enclosure & Flight",             name:"Parachute",                   model:"Nylon ripstop, 60–90 cm diameter",  specs:"60–90 cm, ~5 m/s descent rate",              price:"₹200–800",  status:"Add",            qty:1},
+  {id:21, category:"Enclosure & Flight",             name:"Nylon flight cord",           model:"Braided nylon, 10m total",           specs:"15+ kg rated, braided nylon, 10m",           price:"₹50–150",   status:"Add",            qty:1},
+  {id:22, category:"Enclosure & Flight",             name:"Helium balloon",              model:"600g or 1200g latex",                specs:"600g → ~25 km / 1200g → ~35 km altitude",   price:"₹800–2500", status:"Core",           qty:1},
+  {id:23, category:"Sensors — Mission 4",            name:"BME280",                      model:"Temp + humidity + pressure, I2C",   specs:"I2C/SPI, 3.3V, full weather profile",        price:"₹150–300",  status:"Mission 4",      qty:1},
+  {id:24, category:"Sensors — Mission 4",            name:"DS18B20",                     model:"External temp probe, 1-Wire",        specs:"1-Wire, −55°C to +125°C, waterproof",       price:"₹80–150",   status:"Mission 4",      qty:1},
+  {id:25, category:"Sensors — Mission 4",            name:"MPU-6050 IMU",                model:"Gyro + accelerometer, I2C",          specs:"I2C, 3.3V, tracks spin & orientation",      price:"₹100–200",  status:"Mission 4",      qty:1},
+  {id:26, category:"Sensors — Mission 4",            name:"UV index sensor",             model:"ML8511, analog output",              specs:"Analog out, 3.3V, spikes above 20 km",       price:"₹150–250",  status:"Mission 4",      qty:1},
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let components = JSON.parse(JSON.stringify(DEFAULTS));
+let nextId = 27;
+let editId = null;
+
+// ─── TOAST ──────────────────────────────────────────────────────────────────
+function toast(msg, dur=2400) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove("show"), dur);
+}
+
+// ─── STATS ──────────────────────────────────────────────────────────────────
+function updateStats() {
+  const c = components;
+  const n = (s) => c.filter(x => x.status === s).length;
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="stat-n">${c.length}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--blue)">${n("Core")}</div><div class="stat-l">Core payload</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--green)">${n("Add")}</div><div class="stat-l">Adds</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--muted)">${n("Ground station")}</div><div class="stat-l">Ground station</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--amber)">${n("Mission 4")}</div><div class="stat-l">Mission 4</div></div>
+  `;
+}
+
+// ─── CATEGORY FILTER ────────────────────────────────────────────────────────
+function rebuildCatFilter() {
+  const sel = document.getElementById("f-cat");
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All categories</option>';
+  [...new Set(components.map(c => c.category))].sort().forEach(cat => {
+    const o = document.createElement("option");
+    o.value = cat; o.textContent = cat;
+    if (cat === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// ─── FILTER ─────────────────────────────────────────────────────────────────
+function getFiltered() {
+  const q  = document.getElementById("search").value.toLowerCase().trim();
+  const st = document.getElementById("f-status").value;
+  const ct = document.getElementById("f-cat").value;
+  return components.filter(c => {
+    const t = [c.name,c.model,c.specs,c.category,c.price].join(" ").toLowerCase();
+    return (!q || t.includes(q)) && (!st || c.status === st) && (!ct || c.category === ct);
+  });
+}
+
+// ─── ESCAPE HTML ─────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ─── RENDER ─────────────────────────────────────────────────────────────────
+function render() {
+  const data = getFiltered();
+  const rc = document.getElementById("rc");
+  rc.textContent = data.length !== components.length ? `${data.length} / ${components.length} shown` : `${components.length} components`;
+  const main = document.getElementById("main");
+  if (!data.length) {
+    main.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>No components match.<p>Try a different search or clear the filters.</p></div>';
+    return;
+  }
+  const bycat = {};
+  data.forEach(c => (bycat[c.category] = bycat[c.category] || []).push(c));
+  main.innerHTML = Object.entries(bycat).map(([cat, items]) => `
+    <div class="cat-section">
+      <div class="cat-label">${esc(cat)} <span class="cat-count">(${items.length})</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Name</th>
+            <th class="hide-sm">Model / variant</th>
+            <th class="hide-sm">Specs</th>
+            <th>Status</th><th>Price</th><th>Qty</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${items.map((c,i) => `<tr>
+              <td class="td-num">${i+1}</td>
+              <td class="td-name">${esc(c.name)}</td>
+              <td class="td-model hide-sm">${esc(c.model||"—")}</td>
+              <td class="td-specs hide-sm">${esc(c.specs||"—")}</td>
+              <td><span class="badge badge-${(c.status||"").replace(/\s+/g,"-")}">${esc(c.status)}</span></td>
+              <td class="td-price">${esc(c.price||"—")}</td>
+              <td><div class="qty-ctrl">
+                <button class="qty-btn" onclick="chQty(${c.id},-1)">−</button>
+                <span class="qty-val">${c.qty||1}</span>
+                <button class="qty-btn" onclick="chQty(${c.id},1)">+</button>
+              </div></td>
+              <td><div class="action-btns">
+                <button class="btn btn-sm" onclick="openEdit(${c.id})">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="delComp(${c.id})">Delete</button>
+              </div></td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>`).join("");
+}
+
+// ─── QTY ────────────────────────────────────────────────────────────────────
+function chQty(id, d) {
+  const c = components.find(x => x.id === id);
+  if (!c) return;
+  c.qty = Math.max(1, (c.qty||1) + d);
+  render();
+}
+
+// ─── MODAL OPEN ─────────────────────────────────────────────────────────────
+function clearForm() {
+  ["f-name","f-model","f-specs","f-price"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("f-qty").value = "1";
+  document.getElementById("f-status-m").value = "Add";
+  document.getElementById("f-cat-m").value = "Sensors — Mission 4";
+  document.getElementById("merr").style.display = "none";
+}
+
+function openAdd() {
+  editId = null;
+  clearForm();
+  document.getElementById("mtitle").textContent = "Add component";
+  document.getElementById("savebtn").textContent = "Save component";
+  document.getElementById("backdrop").classList.add("open");
+  setTimeout(() => document.getElementById("f-name").focus(), 60);
+}
+
+function openEdit(id) {
+  editId = id;
+  const c = components.find(x => x.id === id);
+  if (!c) return;
+  clearForm();
+  document.getElementById("f-name").value     = c.name     || "";
+  document.getElementById("f-model").value    = c.model    || "";
+  document.getElementById("f-specs").value    = c.specs    || "";
+  document.getElementById("f-price").value    = c.price    || "";
+  document.getElementById("f-qty").value      = c.qty      || 1;
+  document.getElementById("f-status-m").value = c.status   || "Add";
+  document.getElementById("f-cat-m").value    = c.category || "Other";
+  document.getElementById("mtitle").textContent = "Edit component";
+  document.getElementById("savebtn").textContent = "Save changes";
+  document.getElementById("backdrop").classList.add("open");
+  setTimeout(() => document.getElementById("f-name").focus(), 60);
+}
+
+function closeModal() { document.getElementById("backdrop").classList.remove("open"); }
+function closeOuter(e) { if (e.target.id === "backdrop") closeModal(); }
+
+function showErr(msg) {
+  const el = document.getElementById("merr");
+  el.textContent = msg; el.style.display = "block";
+}
+
+// ─── SAVE ────────────────────────────────────────────────────────────────────
+function saveComp() {
+  const name = document.getElementById("f-name").value.trim();
+  if (!name) { showErr("Name is required."); document.getElementById("f-name").focus(); return; }
+
+  const payload = {
+    name,
+    model:    document.getElementById("f-model").value.trim(),
+    category: document.getElementById("f-cat-m").value,
+    status:   document.getElementById("f-status-m").value,
+    specs:    document.getElementById("f-specs").value.trim(),
+    price:    document.getElementById("f-price").value.trim(),
+    qty:      parseInt(document.getElementById("f-qty").value) || 1
+  };
+
+  if (editId !== null) {
+    const idx = components.findIndex(c => c.id === editId);
+    if (idx !== -1) components[idx] = { ...components[idx], ...payload };
+    toast("✓ Component updated");
+  } else {
+    payload.id = nextId++;
+    components.push(payload);
+    toast("✓ Component added");
+  }
+
+  rebuildCatFilter();
+  updateStats();
+  render();
+  closeModal();
+}
+
+// ─── DELETE ──────────────────────────────────────────────────────────────────
+function delComp(id) {
+  const c = components.find(x => x.id === id);
+  if (!confirm(`Delete "${c?.name}"?`)) return;
+  components = components.filter(x => x.id !== id);
+  rebuildCatFilter(); updateStats(); render();
+  toast("🗑 Deleted");
+}
+
+// ─── RESET ───────────────────────────────────────────────────────────────────
+function resetData() {
+  if (!confirm("Reset to default Mission 3 list? All custom changes will be lost.")) return;
+  components = JSON.parse(JSON.stringify(DEFAULTS));
+  nextId = 27;
+  rebuildCatFilter(); updateStats(); render();
+  toast("↺ Reset to defaults");
+}
+
+// ─── EXPORT CSV ──────────────────────────────────────────────────────────────
+function exportCSV() {
+  const data = getFiltered();
+  const hdr = ["Category","Name","Model","Specs","Status","Price","Qty"];
+  const rows = data.map(c =>
+    [c.category,c.name,c.model||"",c.specs||"",c.status,c.price||"",c.qty||1]
+    .map(v => `"${String(v).replace(/"/g,'""')}"`)
+    .join(",")
+  );
+  dl([hdr.join(","), ...rows].join("\n"), "balloon_bom_mission3.csv", "text/csv");
+  toast("⬇ CSV exported");
+}
+
+// ─── EXPORT / IMPORT JSON ────────────────────────────────────────────────────
+function exportJSON() {
+  dl(JSON.stringify({components, nextId}, null, 2), "balloon_bom_backup.json", "application/json");
+  toast("💾 JSON backup saved");
+}
+
+function importData() { document.getElementById("import-input").click(); }
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (!Array.isArray(parsed.components)) throw new Error("Invalid format");
+      if (!confirm(`Import ${parsed.components.length} components? This will replace the current list.`)) return;
+      components = parsed.components;
+      nextId = parsed.nextId || (Math.max(...components.map(c=>c.id)) + 1);
+      rebuildCatFilter(); updateStats(); render();
+      toast(`✓ Imported ${components.length} components`);
+    } catch { toast("⚠️ Invalid JSON file"); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+}
+
+// ─── DOWNLOAD HELPER ─────────────────────────────────────────────────────────
+function dl(content, filename, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = filename; a.click();
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+rebuildCatFilter();
+updateStats();
+render();
+</script>
+</body>
+</html>
